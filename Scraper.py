@@ -7,8 +7,10 @@ import re
 import signal
 
 WORKERS = 20
+BATCH_SIZE = 100
 REQUEST_TIMEOUT = 5
 VERBOSE = True
+CLEAR_PARAMS = True
 
 
 class Scraper:
@@ -32,6 +34,7 @@ class Scraper:
                 if VERBOSE:
                     print("visited: ", len(self.visit) - len(self.queue))
                     print("queue: ", len(self.queue))
+                    print("Result Found: ", len(self.result))
 
                 nextLinksToProcess = self.get_next()
 
@@ -64,6 +67,9 @@ class Scraper:
 
         resultList = [result for sublinks, results in linksAndResult for result in results]
 
+        if CLEAR_PARAMS:
+            links = map(self.clear_url_params_from_link, links)
+
         if VERBOSE:
             print(resultList)
 
@@ -73,7 +79,7 @@ class Scraper:
 
     def get_next(self) -> list:
         next = []
-        for i in range(WORKERS):
+        for i in range(BATCH_SIZE):
             if not len(self.queue):
                 break
             next.append(self.queue.pop(0))
@@ -103,7 +109,10 @@ class Scraper:
 
     def find_all_links(self, content: str) -> set:
         soup = BeautifulSoup(content, 'html.parser')
-        return set(a.get('href') for a in soup.findAll('a', attrs={'href': re.compile("https?://")}))
+        return set(a.get('href') for a in soup.findAll('a', attrs={'href': re.compile("^https?://")}))
+
+    def clear_url_params_from_link(self, link: str) -> str:
+        return link.split('?')[0]
 
 
 if __name__ == '__main__':
@@ -111,11 +120,13 @@ if __name__ == '__main__':
 
     try:
         scraper.scraping(['https://www.blockchain.com/pt/btc/address/1F1tAaz5x1HUXrCNLbtMDqcw6o5GNn4xqX',
-                          'https://www.blockchain.com/pt/btc/address/1UZhhzWo85osGzNrs1BVjoE3FP8ea2umX'])
-        # 'https://github.com/explore',
-        # 'https://br.investing.com/crypto/bitcoin/chat',
-        # 'https://medium.com/blockchannel/blockchain-communities-and-their-emergent-governance-fdf24329551f'])
+                          'https://www.blockchain.com/pt/btc/address/1UZhhzWo85osGzNrs1BVjoE3FP8ea2umX',
+                          'https://github.com/explore',
+                          'https://br.investing.com/crypto/bitcoin/chat',
+                          'https://medium.com/blockchannel/blockchain-communities-and-their-emergent-governance-fdf24329551f'])
     except KeyboardInterrupt:
         pass
-    print(scraper.result)
-    print(len(scraper.result))
+    print("\n\nBitcoin Address: ", scraper.result)
+    print("Bitcoin Address Found: ", len(scraper.result))
+    print("Pages Visited: ", len(scraper.visit) - len(scraper.queue))
+    print("Pages Founded: ", len(scraper.visit))

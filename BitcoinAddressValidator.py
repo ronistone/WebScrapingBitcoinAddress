@@ -26,7 +26,8 @@ def find_all_regex_ocurrences_btc(text):
 def get_all_bitcoin_address_from_text(text):
     addresses = set(find_all_regex_ocurrences_btc(text))
     wallets = [a for a in addresses if check_bc(a)]
-    print('Address', len(wallets), ' found!')
+    if len(wallets):
+        print('Address', len(wallets), ' found!')
     return wallets
 
 

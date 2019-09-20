@@ -6,3 +6,4 @@ lib64
 bin/
 pip-selfcheck.json
 .idea/
+*.pdf
